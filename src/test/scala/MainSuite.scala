@@ -81,4 +81,25 @@ class MainSuite extends munit.FunSuite {
     assertEquals(Parser.regex("^C").parse("ABCD"), parser_failure)
   }
 
+  test("FlatMap Parseresult") {
+
+    val parser_succeed1 = ParseSucceed("AB", Input("ABCD", 2)).flatMap(
+      a => ParseSucceed("BBB", Input("BBBAC", 3)).flatMap(
+        b=> ParseSucceed(a + b, Input("BBBAC", 3))))
+    assertEquals(ParseSucceed("ABBBB", Input("BBBAC", 3)), parser_succeed1)
+
+  }
+
+  test("Map Parseresult") {
+
+
+    val parser_succeed2 =
+      for {
+        a <- ParseSucceed("AAAB", Input("AAABCD", 4))
+        b <- ParseSucceed(a + "AABC", Input("AABCD", 4))
+      } yield (b + "A")
+    assertEquals(ParseSucceed("AAABAABCA",Input("AABCD", 4)), parser_succeed2)
+
+  }
+
 }
