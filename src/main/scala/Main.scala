@@ -1,7 +1,9 @@
-
+import ParseResult.*
+import scala.util.matching.Regex
+// Common interface for parsers
 trait Parser[A]:
   /** parse with this and then parse with pb. */
-  def ~[B](pb: => Parser[B]): Parser[(A, B)] = this.
+  def ~[B](pb: => Parser[B]): Parser[(A, B)] = ???
   /** parse with this, or parse with pb if this fails. */
   def |[B](pb: Parser[B]): Parser[Either[A, B]] = ???
   /** try to parse with this. It does not fail if the parsing did not work. */
@@ -14,13 +16,6 @@ trait Parser[A]:
 
   final def parse(s: String): ParseResult[A] = parse(Input(s))
   def parse(input: Input): ParseResult[A]
-
-
-val numPattern = "[0-9]+".r
-val address = "123 Main Street Suite 101"
-val match1 = numPattern.findFirstIn(address)
-
-
 
 // Input of a parser
 // * data: represents the input string
@@ -35,5 +30,39 @@ case class Input(data: String, offset: Int = 0):
 // first parser => Input("AABCD", 1)
 // deuxième parser => input.current("BC".length)
 
+object Parser:
+  def createParser[A](f: Input => ParseResult[A]): Parser[A] = input => f(input)
+  /** parse an integer. */
+  def Parser_Int(input: Input): ParseResult[Int]= {
+    val regex = new Regex("^-?[0-9]+")
+    val extractInteger = (regex  findAllIn input.data).mkString("")
+    if (extractInteger.isEmpty)
+      ParseFailure(input)
+    else
+      if (extractInteger.length == input.data.length)
+        ParseSucceed(extractInteger.toInt, input.copy(offset = input.data.length-1))
+        else
+        ParseSucceed(extractInteger.toInt, input.copy(offset = extractInteger.length))
+  }
+
+  def int: Parser[Int] = createParser(Parser_Int)
+  /** parse exactly the string s */
+  def string(s: String): Parser[String] = createParser(???)
+  /** parse according to a regular expression */
+  def regex(r: String): Parser[String] = createParser(???)
+
+// Result of parse
+enum ParseResult[+A]:
+  case ParseFailure(onInput: Input) extends ParseResult[Nothing]
+  case ParseSucceed(value: A, remainingInput: Input) extends ParseResult[A]
+
+  def map[B](f: A => B): ParseResult[B] = ???
+  def flatMap[B](f: A => ParseResult[B]): ParseResult[B] = ???
+
+
 @main
-def _01_main(): Unit = println(Input("123456789",2).remaining)
+def _01_main(): Unit = {
+  val x = new Regex("^-?[0-9]+")
+  val myself = "-8912a45"
+  println(Parser.int.parse("12"))
+}
