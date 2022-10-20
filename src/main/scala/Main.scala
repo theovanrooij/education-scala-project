@@ -1,10 +1,12 @@
 import ParseResult.*
+
 import scala.util.matching.Regex
 
 // Common interface for parsers
 trait Parser[A]:
   /** parse with this and then parse with pb. */
   def ~[B](pb: => Parser[B]): Parser[(A, B)] = ???
+
   /** parse with this, or parse with pb if this fails. */
   def |[B](pb: Parser[B]): Parser[Either[A, B]] = ???
   /** try to parse with this. It does not fail if the parsing did not work. */
@@ -32,25 +34,57 @@ case class Input(data: String, offset: Int = 0):
 // deuxième parser => input.current("BC".length)
 
 object Parser:
+  val stringParserValue : String = "A"
+
   def createParser[A](f: Input => ParseResult[A]): Parser[A] = input => f(input)
   /** parse an integer. */
-  def Parser_Int(input: Input): ParseResult[Int]= {
+  def parserInt(input: Input): ParseResult[Int]= {
+    
     val regex = new Regex("^-?[0-9]+")
-    val extractInteger = (regex  findAllIn input.data).mkString("")
+    val extractInteger = (regex  findAllIn input.remaining).mkString("")
     if (extractInteger.isEmpty)
       ParseFailure(input)
     else
       if (extractInteger.length == input.data.length)
         ParseSucceed(extractInteger.toInt, input.copy(offset = input.data.length-1))
-        else
+      else
         ParseSucceed(extractInteger.toInt, input.copy(offset = extractInteger.length))
   }
 
-  def int: Parser[Int] = createParser(Parser_Int)
+  def int: Parser[Int] = createParser(parserInt)
+
+  def parserString(input: Input, s: String): ParseResult[String] = {
+    val currentString = input.current(s.length)
+    if (currentString == s)
+      if (s.length == input.data.length)
+        ParseSucceed(s, input.copy(offset = input.data.length - 1))
+      else
+        ParseSucceed(s, input.copy(offset = s.length))
+    else
+      ParseFailure(input)
+
+  }
+
   /** parse exactly the string s */
-  def string(s: String): Parser[String] = createParser(???)
+  def string(s: String): Parser[String] = {
+    createParser(input => parserString(input, s))
+  }
+
+  def parserRegex(input: Input, r: String): ParseResult[String] = {
+    val regex : Regex = new Regex(r)
+    val extractRegex = (regex findAllIn input.data).mkString("")
+    if (extractRegex.isEmpty)
+      ParseFailure(input)
+    else if (extractRegex.length == input.data.length)
+      ParseSucceed(extractRegex, input.copy(offset = input.data.length - 1))
+    else
+      ParseSucceed(extractRegex, input.copy(offset = extractRegex.length))
+  }
   /** parse according to a regular expression */
-  def regex(r: String): Parser[String] = createParser(???)
+  def regex(r: String): Parser[String] = {
+
+    createParser(input => parserRegex(input,r))
+  }
 
 // Result of parse
 enum ParseResult[+A]:
@@ -63,7 +97,9 @@ enum ParseResult[+A]:
 
 @main
 def _01_main(): Unit = {
-  val x = new Regex("^-?[0-9]+")
-  val myself = "-8912a45"
-  println(Parser.int.parse("12"))
+  println(Parser.regex("A*C").parse("ABCD"))
+
 }
+
+/*Comment passer la valeur de string et regex
+* besoin d'aide pour la combinaison de parser*/
