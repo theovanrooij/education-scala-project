@@ -52,4 +52,33 @@ class MainSuite extends munit.FunSuite {
     assertEquals(Parser.int.parse("-12-a"), parser_succeed5)
   }
 
+  test("Parser String") {
+
+
+    val parser_succeed1 = ParseSucceed("A", Input("AB", 1))
+    assertEquals(Parser.string("A").parse("AB"), parser_succeed1)
+
+    val parser_succeed2 = ParseSucceed("A", Input("AAB", 1))
+    assertEquals(Parser.string("A").parse("AAB"), parser_succeed2)
+
+    val parser_succeed3 = ParseSucceed("AB", Input("ABCD", 2))
+    assertEquals(Parser.string("AB").parse("ABCD"), parser_succeed3)
+
+
+    val parser_failure = ParseFailure(Input("BA", 0))
+    assertEquals(Parser.string("A").parse("BA"), parser_failure)
+  }
+
+  test("Parser Regex") {
+
+    val parser_succeed1 = ParseSucceed("AB", Input("ABCD", 2))
+    assertEquals(Parser.regex("A*B").parse("ABCD"), parser_succeed1)
+
+    val parser_succeed2 = ParseSucceed("AAAB", Input("AAABCD", 4))
+    assertEquals(Parser.regex("A*B").parse("AAABCD"), parser_succeed2)
+
+    val parser_failure = ParseFailure(Input("ABCD", 0))
+    assertEquals(Parser.regex("^C").parse("ABCD"), parser_failure)
+  }
+
 }
