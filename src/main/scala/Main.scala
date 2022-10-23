@@ -13,7 +13,17 @@ trait Parser[A]:
     } yield (a, b)
 
   /** parse with this, or parse with pb if this fails. */
-  def |[B](pb: Parser[B]): Parser[Either[A, B]] = ???
+  def |[B](pb: Parser[B]): Parser[Either[A, B]] =
+    Parser.createParser(input => {
+      this.parse(input) match
+        case ParseResult.ParseSucceed(value, input) => ParseResult.ParseSucceed(Left(value), input)
+        case ParseResult.ParseFailure(input) => {
+          pb.parse(input) match
+            case ParseResult.ParseSucceed(value, input) => ParseResult.ParseSucceed(Right(value), input)
+            case ParseResult.ParseFailure(input) => ParseResult.ParseFailure(input)
+        }
+    })
+
   /** try to parse with this. It does not fail if the parsing did not work. */
   def ? : Parser[Option[A]] = ???
   /** use this to parse multiple times, until it does not apply. */
@@ -112,17 +122,10 @@ enum ParseResult[+A]:
 
 @main
 def _01_main(): Unit = {
-  println(Parser.regex("A*C").flatMap(a=> Parser.string("A*C")))
-  println(ParseSucceed("AAAB", Input("AAABCD", 4)).flatMap(a =>
-    ParseSucceed(a+"AAB", Input("AABCD", 3))))
-
-  for{
-    a <- ParseSucceed("AAAB", Input("AAABCD", 4))
-    b <- ParseSucceed(a+"AAB", Input("AABCD", 4))
-  } yield (b+"A")
-
   println((Parser.string("A") ~ Parser.string("B")).parse("ABC"))
-
+  println((Parser.int | Parser.string("A")).parse("12"))
+  println((Parser.int | Parser.string("A")).parse("A"))
+  println((Parser.int | Parser.string("A")).parse("C"))
 }
 
 /*Comment passer la valeur de string et regex
