@@ -25,9 +25,28 @@ trait Parser[A]:
     })
 
   /** try to parse with this. It does not fail if the parsing did not work. */
-  def ? : Parser[Option[A]] = ???
+  def ? : Parser[Option[A]] =
+    Parser.createParser(input => {
+      this.parse(input) match
+        case ParseResult.ParseSucceed(value, input) => ParseResult.ParseSucceed(Option(value), input)
+        case ParseResult.ParseFailure(input) => ParseResult.ParseSucceed(Option.empty, input)
+    })
   /** use this to parse multiple times, until it does not apply. */
-  def repeat: Parser[List[A]] = ???
+
+  def duc(l: List[A], input: Input): List[A] = {
+    this.parse(input) match
+      case ParseResult.ParseSucceed(value, input2) => duc(l:+value, Input(input2.remaining))
+      case ParseResult.ParseFailure(_) => l
+  }
+  def repeat: Parser[List[A]] =
+    Parser.createParser(input => {
+      this.parse(input) match
+        case ParseResult.ParseSucceed(value, input) => {
+          val l = duc(List(value), Input(input.remaining))
+          ParseResult.ParseSucceed(l,input.copy(offset=l.length*l(0).toString.length))
+        }
+        case ParseResult.ParseFailure(input) => ParseResult.ParseSucceed(List(), input)
+    })
 
   /** convert the value output by the parser. */
   def map[B](f: A => B): Parser[B] = Parser.createParser(input => {this.parse(input).map(f)})
@@ -123,9 +142,11 @@ enum ParseResult[+A]:
 @main
 def _01_main(): Unit = {
   println((Parser.string("A") ~ Parser.string("B")).parse("ABC"))
-  println((Parser.int | Parser.string("A")).parse("12"))
-  println((Parser.int | Parser.string("A")).parse("A"))
-  println((Parser.int | Parser.string("A")).parse("C"))
+
+  println(Parser.int.?.parse("1"))
+  println(Parser.int.?.parse("A"))
+  println(Parser.string("A").repeat.parse("AAAAAAA1"))
+  println(Parser.string("A").repeat.parse("11"))
 }
 
 /*Comment passer la valeur de string et regex
