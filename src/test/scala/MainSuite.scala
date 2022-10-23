@@ -101,5 +101,64 @@ class MainSuite extends munit.FunSuite {
     assertEquals(ParseSucceed("AAABAABCA",Input("AABCD", 4)), parser_succeed2)
 
   }
+  test("Trait ~"){
+    val parser_succeed1 = ParseSucceed(("A","B"),Input("ABC",2))
+    assertEquals((Parser.string("A") ~ Parser.string("B")).parse("ABC"), parser_succeed1)
 
+    val parser_failure1 = ParseFailure(Input("1BC", 0))
+    assertEquals((Parser.string("A") ~ Parser.string("B")).parse("1BC"), parser_failure1)
+
+    val parser_failure2 = ParseFailure(Input("A10", 1))
+    assertEquals((Parser.string("A") ~ Parser.string("B")).parse("A10"), parser_failure2)
+
+  }
+
+  test("Trait |"){
+    val parser_succeed1 = ParseSucceed(Left("A"), Input("ABC", 1))
+    assertEquals((Parser.string("A") | Parser.string("B")).parse("ABC"), parser_succeed1)
+
+    val parser_succeed2 = ParseSucceed(Right("B"), Input("BAC", 1))
+    assertEquals((Parser.string("A") | Parser.string("B")).parse("BAC"), parser_succeed2)
+
+    val parser_succeed3 = ParseSucceed(Left(10), Input("10C", 2))
+    assertEquals((Parser.int | Parser.string("A")).parse("10C"), parser_succeed3)
+
+    val parser_succeed4 = ParseSucceed(Right(10), Input("10C", 2))
+    assertEquals((Parser.string("A") | Parser.int).parse("10C"), parser_succeed4)
+
+    val parser_failure1 = ParseFailure(Input("C", 0))
+    assertEquals((Parser.string("A") | Parser.string("B")).parse("C"), parser_failure1)
+
+    val parser_failure2 = ParseFailure(Input("10", 0))
+    assertEquals((Parser.string("A") | Parser.string("B")).parse("10"), parser_failure2)
+  }
+
+  test("Trait ?"){
+    val parser_succeed1 = ParseSucceed(Option.empty, Input("ABC", 0))
+    assertEquals(Parser.int.?.parse("ABC"), parser_succeed1)
+
+    val parser_succeed2 = ParseSucceed(Some(10), Input("10ABC", 2))
+    assertEquals(Parser.int.?.parse("10ABC"), parser_succeed2)
+
+    val parser_succeed3 = ParseSucceed(None, Input("10XYZ", 0))
+    assertEquals(Parser.string("X").?.parse("10XYZ"), parser_succeed3)
+
+    val parser_succeed4 = ParseSucceed(Some("A"), Input("AAA10", 1))
+    assertEquals(Parser.string("A").?.parse("AAA10"), parser_succeed4)
+
+  }
+
+  test("Trait repeat"){
+    val parser_succeed1 = ParseSucceed(List("A","A","A","A"), Input("AAAAB", 4))
+    assertEquals(Parser.string("A").repeat.parse("AAAAB"), parser_succeed1)
+
+    val parser_succeed2 = ParseSucceed(List(), Input("AAAA", 0))
+    assertEquals(Parser.string("B").repeat.parse("AAAA"), parser_succeed2)
+
+    val parser_succeed3 = ParseSucceed(List(), Input("AAAABBBB", 0))
+    assertEquals(Parser.string("B").repeat.parse("AAAABBBB"), parser_succeed3)
+
+
+
+  }
 }
