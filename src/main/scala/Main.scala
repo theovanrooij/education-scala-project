@@ -1,7 +1,6 @@
 import ParseResult.*
 
 import scala.util.matching.Regex
-
 // Common interface for parsers
 trait Parser[A]:
 
