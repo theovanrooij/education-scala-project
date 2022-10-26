@@ -95,7 +95,9 @@ object Parser:
     if (s.length > input.remaining.length) return ParseFailure(input)
     val currentString = input.current(s.length)
     if (currentString == s)
-      if (s.length == input.data.length)
+      if (input.data.length > input.remaining.length)
+        ParseSucceed(s, input.copy(offset = input.data.length - input.remaining.length + s.length))
+      else if (s.length == input.data.length)
         ParseSucceed(s, input.copy(offset = input.data.length - 1))
       else
         ParseSucceed(s, input.copy(offset = s.length))
@@ -142,8 +144,7 @@ enum ParseResult[+A]:
 
 @main
 def _01_main(): Unit = {
-  println(Parser.string("duc").repeat.parse("ducducducduc"))
-  println(Parser.string("AAA").parse("A"))
+  println((Parser.string("ABC")~Parser.string("BC")).parse("ABCBCB"))
 }
 
 /*Comment passer la valeur de string et regex
