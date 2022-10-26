@@ -18,6 +18,10 @@ class MainSuite extends munit.FunSuite {
     val input = Input("123456789", 3)
     val current = "456"
     assertEquals(input.current(3), current)
+
+    val input2 = Input("123456789", 3)
+    val current2 = "456789"
+    assertEquals(input2.current(15), current2)
   }
   test("Inputs next") {
     val input = Input("123456789", 3)
@@ -67,6 +71,9 @@ class MainSuite extends munit.FunSuite {
 
     val parser_failure = ParseFailure(Input("BA", 0))
     assertEquals(Parser.string("A").parse("BA"), parser_failure)
+
+    val parser_failure2 = ParseFailure(Input("BA", 0))
+    assertEquals(Parser.string("AAAA").parse("BA"), parser_failure2)
   }
 
   test("Parser Regex") {
@@ -81,26 +88,42 @@ class MainSuite extends munit.FunSuite {
     assertEquals(Parser.regex("^C").parse("ABCD"), parser_failure)
   }
 
-  test("FlatMap Parseresult") {
-
+  test("FlatMap ParseResult") {
     val parser_succeed1 = ParseSucceed("AB", Input("ABCD", 2)).flatMap(
       a => ParseSucceed("BBB", Input("BBBAC", 3)).flatMap(
-        b=> ParseSucceed(a + b, Input("BBBAC", 3))))
+        b=> ParseSucceed(a + b, Input("BBBAC", 3))
+      ))
     assertEquals(ParseSucceed("ABBBB", Input("BBBAC", 3)), parser_succeed1)
+  }
+
+
+  test("Map ParseResult") {
+    val parser_succeed1 = ParseSucceed("12", Input("12a", 2)
+    ).map(a => a.toInt)
+    assertEquals(ParseSucceed(12, Input("12a", 2)), parser_succeed1)
+
+    val parser_succeed2 =ParseSucceed("AAAB", Input("AAABCD", 4)
+    ).map(a=> a+"A")
+    assertEquals(ParseSucceed("AAABA",Input("AAABCD", 4)), parser_succeed2)
+  }
+  test("For Compréhension ParseResult") {
+    val parser_succeed1 = ParseSucceed("AB", Input("ABCD", 2)).flatMap(
+      a => ParseSucceed("BBB", Input("BBBAC", 3)).map(b => a+b))
+    assertEquals(ParseSucceed("ABBBB", Input("BBBAC", 3)), parser_succeed1)
+  }
+  test("Map Parser") {
+
+    // Crete a string Parser then convert it to a int
+    val parser_succeed1 = Parser.string("12").map(a=> a.toInt).parse("12a")
+    assertEquals(ParseSucceed(12,Input("12a",2)), parser_succeed1)
+
+    // Crete a int Parser then convert it to a string
+    val parser_succeed2 = Parser.int.map(a => a.toString).parse("12a")
+    assertEquals(ParseSucceed("12", Input("12a", 2)), parser_succeed2)
 
   }
 
-  test("Map Parseresult") {
 
-
-    val parser_succeed2 =
-      for {
-        a <- ParseSucceed("AAAB", Input("AAABCD", 4))
-        b <- ParseSucceed(a + "AABC", Input("AABCD", 4))
-      } yield (b + "A")
-    assertEquals(ParseSucceed("AAABAABCA",Input("AABCD", 4)), parser_succeed2)
-
-  }
   test("Trait ~"){
     val parser_succeed1 = ParseSucceed(("A","B"),Input("ABC",2))
     assertEquals((Parser.string("A") ~ Parser.string("B")).parse("ABC"), parser_succeed1)
@@ -146,6 +169,9 @@ class MainSuite extends munit.FunSuite {
     val parser_succeed4 = ParseSucceed(Some("A"), Input("AAA10", 1))
     assertEquals(Parser.string("A").?.parse("AAA10"), parser_succeed4)
 
+    val parser_succeed5 = ParseSucceed(Some("AB"), Input("ABCD", 2))
+    assertEquals(Parser.string("AB").?.parse("ABCD"), parser_succeed5)
+
   }
 
   test("Trait repeat"){
@@ -159,6 +185,10 @@ class MainSuite extends munit.FunSuite {
     assertEquals(Parser.string("B").repeat.parse("AAAABBBB"), parser_succeed3)
 
 
+    val parser_succeed4 = ParseSucceed(List("AB","AB","AB","AB"), Input("ABABABABAAAA", 8))
+    assertEquals(Parser.string("AB").repeat.parse("ABABABABAAAA"), parser_succeed4)
 
   }
 }
+
+
