@@ -59,18 +59,16 @@ trait Parser[A]:
   final def parse(s: String): ParseResult[A] = parse(Input(s))
   def parse(input: Input): ParseResult[A]
 
-// Input of a parser
-// * data: represents the input string
-// * offset: is the pointer on the string, that the parser increases during its processing
 case class Input(data: String, offset: Int = 0):
-  def current(n: Int): String = data.substring(offset,offset+n)
+  def current(n: Int): String = {
+    if (offset+n > data.length)
+      this.remaining
+    else
+      data.substring(offset,offset+n)
+  }
   def next(n: Int): Input = copy(offset = offset+n)
   def remaining: String = data.substring(offset)
 
-// parser.string("A") tild parser.string("BCD")
-// Input("ABCD", 0)
-// first parser => Input("AABCD", 1)
-// deuxième parser => input.current("BC".length)
 
 object Parser:
   def createParser[A](f: Input => ParseResult[A]): Parser[A] = input => f(input)
@@ -133,18 +131,22 @@ enum ParseResult[+A]:
 
   def map[B](f: A => B): ParseResult[B] =
     this match
-      case ParseResult.ParseSucceed(value, input) => ParseSucceed(f(value),input)
-      case ParseResult.ParseFailure(input) => ParseResult.ParseFailure(input)
+      case ParseResult.ParseSucceed(value, input) =>
+        ParseSucceed(f(value),input)
+      case ParseResult.ParseFailure(input) =>
+        ParseResult.ParseFailure(input)
+
   def flatMap[B](f: A => ParseResult[B]): ParseResult[B] =
     this match
-      case ParseResult.ParseSucceed(value,__) => f(value)
-      case ParseResult.ParseFailure(input) => ParseResult.ParseFailure(input)
+      case ParseResult.ParseSucceed(value,__) =>
+        f(value)
+      case ParseResult.ParseFailure(input) =>
+        ParseResult.ParseFailure(input)
 
 
 @main
 def _01_main(): Unit = {
-  println((Parser.string("ABC")~Parser.string("BC")).parse("ABCBCB"))
+  println("Hello world")
 }
 
-/*Comment passer la valeur de string et regex
-* besoin d'aide pour la combinaison de parser*/
+
