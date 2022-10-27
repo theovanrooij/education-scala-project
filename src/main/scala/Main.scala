@@ -73,20 +73,10 @@ case class Input(data: String, offset: Int = 0):
 object Parser:
   def createParser[A](f: Input => ParseResult[A]): Parser[A] = input => f(input)
   /** parse an integer. */
-  def parserInt(input: Input): ParseResult[Int]= {
-
-    val regex = new Regex("^-?[0-9]+")
-    val extractInteger = (regex  findAllIn input.remaining).mkString("")
-    if (extractInteger.isEmpty)
-      ParseFailure(input)
-    else
-      if (extractInteger.length == input.data.length)
-        ParseSucceed(extractInteger.toInt, input.copy(offset = input.data.length-1))
-      else
-        ParseSucceed(extractInteger.toInt, input.copy(offset = extractInteger.length))
+  //Modification après l'oral pour tester le fonctionnement
+  def int: Parser[Int] = {
+    createParser(input => parserRegex(input, "^-?[0-9]+").map(a => a.toInt))
   }
-
-  def int: Parser[Int] = createParser(parserInt)
 
   def parserString(input: Input, s: String): ParseResult[String] = {
     if (s.length > input.remaining.length) return ParseFailure(input)
@@ -147,6 +137,14 @@ enum ParseResult[+A]:
 @main
 def _01_main(): Unit = {
   println("Hello world")
+  case class test(string:String,int:Int)
+
+  val testParser: Parser[test] = (Parser.string("A")~Parser.int).map(
+    (string, int)=>test(string,int))
+
+  println(testParser.parse("A1"))
+
+  println(Parser.int.parse("--12-a"))
 }
 
 
