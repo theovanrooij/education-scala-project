@@ -86,6 +86,9 @@ class MainSuite extends munit.FunSuite {
 
     val parser_failure = ParseFailure(Input("ABCD", 0))
     assertEquals(Parser.regex("^C").parse("ABCD"), parser_failure)
+
+    val parser_succeed3 = ParseSucceed("-512", Input("-512a", 4))
+    assertEquals(Parser.regex("^-?[0-9]*").parse("-512a"), parser_succeed3)
   }
 
   test("FlatMap ParseResult") {
@@ -112,18 +115,18 @@ class MainSuite extends munit.FunSuite {
     assertEquals(ParseSucceed("ABBBB", Input("BBBAC", 3)), parser_succeed1)
   }
   test("Map Parser") {
-
-    // Crete a string Parser then convert it to a int
+    // Create a string Parser then convert it to a int
     val parser_succeed1 = Parser.string("12").map(a=> a.toInt).parse("12a")
     assertEquals(ParseSucceed(12,Input("12a",2)), parser_succeed1)
 
-    // Crete a int Parser then convert it to a string
+    // Create a int Parser then convert it to a string
     val parser_succeed2 = Parser.int.map(a => a.toString).parse("12a")
     assertEquals(ParseSucceed("12", Input("12a", 2)), parser_succeed2)
-
   }
-
-
+  test("test Oral, multiple -"){
+    val arserInt = Parser.int.parse("-10000-1")
+    assertEquals(ParseSucceed(-10000, Input("-10000-1", 6)), arserInt)
+  }
   test("Trait ~"){
     val parser_succeed1 = ParseSucceed(("A","B"),Input("ABC",2))
     assertEquals((Parser.string("A") ~ Parser.string("B")).parse("ABC"), parser_succeed1)
